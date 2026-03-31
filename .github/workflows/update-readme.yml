@@ -1,4 +1,4 @@
-name: Update README with Dynamic Content
+name: ✨ Update Animated README
 
 on:
   push:
@@ -24,7 +24,7 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: 📊 Update README metrics
+      - name: 📊 Update README metrics & timestamp
         run: |
           python3 << 'EOF'
           import json
@@ -35,11 +35,13 @@ jobs:
           with open('README.md', 'r') as f:
               content = f.read()
           
-          # Update timestamp
-          timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
+          # Update timestamp in multiple locations
+          timestamp = datetime.utcnow().strftime('%Y-%m-%d')
+          
+          # Update the timestamp at bottom
           content = re.sub(
-              r'\*\*Last Updated:\*\* \*\[.*?\]\*',
-              f'**Last Updated:** *[{timestamp}]*',
+              r'Last Updated: \d{4}-\d{2}-\d{2}',
+              f'Last Updated: {timestamp}',
               content
           )
           
@@ -47,24 +49,25 @@ jobs:
           with open('README.md', 'w') as f:
               f.write(content)
           
-          print("✅ README updated with latest timestamp")
+          print("✅ README metrics updated successfully")
+          print(f"⏱️  Timestamp: {timestamp}")
           EOF
 
-      - name: 💾 Commit and push changes
+      - name: 💾 Commit changes if needed
         run: |
           git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
+          git config --local user.name "GitHub Action Bot"
           git add README.md
           
           # Only commit if there are changes
           if git diff --cached --quiet; then
             echo "ℹ️ No changes to commit"
           else
-            git commit -m "chore: update readme metrics [skip ci]"
+            git commit -m "chore: refresh animated readme [skip ci]"
             git push
           fi
 
-      - name: ✨ Verify README
+      - name: ✨ Verify animated README
         run: |
-          echo "📋 README.md verification:"
-          head -20 README.md
+          echo "✅ Animated README deployed!"
+          wc -l README.md
