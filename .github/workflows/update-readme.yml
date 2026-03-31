@@ -1,0 +1,70 @@
+name: Update README with Dynamic Content
+
+on:
+  push:
+    branches:
+      - main
+  schedule:
+    # Run every 6 hours to keep metrics fresh
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+jobs:
+  update-readme:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: 🔧 Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: 📊 Update README metrics
+        run: |
+          python3 << 'EOF'
+          import json
+          import re
+          from datetime import datetime
+          
+          # Read current README
+          with open('README.md', 'r') as f:
+              content = f.read()
+          
+          # Update timestamp
+          timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
+          content = re.sub(
+              r'\*\*Last Updated:\*\* \*\[.*?\]\*',
+              f'**Last Updated:** *[{timestamp}]*',
+              content
+          )
+          
+          # Write back
+          with open('README.md', 'w') as f:
+              f.write(content)
+          
+          print("✅ README updated with latest timestamp")
+          EOF
+
+      - name: 💾 Commit and push changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add README.md
+          
+          # Only commit if there are changes
+          if git diff --cached --quiet; then
+            echo "ℹ️ No changes to commit"
+          else
+            git commit -m "chore: update readme metrics [skip ci]"
+            git push
+          fi
+
+      - name: ✨ Verify README
+        run: |
+          echo "📋 README.md verification:"
+          head -20 README.md
